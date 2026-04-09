@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doom Assumptions — Environment-First</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0c0d10;--bg2:#14151a;--bg3:#1a1b22;--bg4:#24252e;
+--tx:#d8d6ce;--tx2:#908e86;--tx3:#5e5d58;
+--accent:#e8913a;--accent2:#f0b060;--accent-dim:rgba(232,145,58,0.10);
+--green:#5dca7a;--green-dim:rgba(93,202,122,0.08);
+--purple:#9b7aed;--purple-dim:rgba(155,122,237,0.08);
+--teal:#4fc4a8;--teal-dim:rgba(79,196,168,0.08);
+--node-bg:rgba(18,19,25,0.85);--node-border:rgba(255,255,255,0.06);--node-border-hover:rgba(255,255,255,0.12);
+--line-color:rgba(255,255,255,0.08);--dot-color:rgba(255,255,255,0.2);
+--r:12px;--rl:16px;
+}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5}
+.app{max-width:1400px;margin:0 auto;padding:32px 24px 80px}
+
+header{margin-bottom:36px;text-align:center}
+.tag{display:inline-block;background:linear-gradient(135deg,rgba(232,145,58,0.15),rgba(232,145,58,0.05));color:var(--accent);font-size:9px;font-weight:600;padding:5px 14px;border-radius:20px;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase;border:0.5px solid rgba(232,145,58,0.2)}
+header h1{font-size:32px;font-weight:600;letter-spacing:-0.5px;margin-bottom:8px;color:#eae8e0}
+header p{color:var(--tx2);font-size:13px;max-width:520px;margin:0 auto;line-height:1.7;font-weight:300}
+
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:28px;padding:16px 20px;background:var(--bg2);border:0.5px solid var(--node-border);border-radius:var(--rl);backdrop-filter:blur(4px)}
+.cg{display:flex;flex-direction:column;gap:4px}
+.cg label{font-size:8px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:1px}
+.cg input[type=text]{background:var(--bg3);border:0.5px solid var(--node-border);border-radius:8px;padding:9px 14px;color:var(--tx);font-size:13px;font-family:inherit;width:220px;outline:none;transition:border .2s}
+.cg input[type=text]:focus{border-color:rgba(232,145,58,0.4)}
+.cg input[type=text]::placeholder{color:var(--tx3)}
+.cg select{background:var(--bg3);border:0.5px solid var(--node-border);border-radius:8px;padding:9px 14px;color:var(--tx);font-size:13px;font-family:inherit;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%235e5d58' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
+.btn-r{background:transparent;border:0.5px solid var(--node-border);border-radius:8px;padding:9px 16px;color:var(--tx3);font-size:11px;font-family:inherit;cursor:pointer;transition:all .15s;align-self:flex-end}
+.btn-r:hover{border-color:var(--node-border-hover);color:var(--tx)}
+
+.pdoom{margin-bottom:28px;padding:24px;background:var(--bg2);border:0.5px solid var(--node-border);border-radius:var(--rl);text-align:center}
+.pdoom-lbl{font-size:9px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px}
+.pdoom-val{font-family:'IBM Plex Mono',monospace;font-size:48px;font-weight:500;transition:color .3s;line-height:1.1;letter-spacing:-1px}
+.pdoom-bar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin:14px auto 0;max-width:200px}
+.pdoom-bar-fill{height:100%;border-radius:2px;transition:width .4s,background .3s}
+.pdoom-scn{font-size:11px;color:var(--tx3);margin-top:10px;font-style:italic;font-weight:300}
+
+.defs-btn{background:transparent;border:0.5px solid var(--node-border);border-radius:8px;padding:6px 14px;color:var(--tx3);font-size:11px;font-family:inherit;cursor:pointer;margin-bottom:20px;transition:all .15s}
+.defs-btn:hover{color:var(--tx);border-color:var(--node-border-hover)}
+
+/* Tree */
+.tree-scroll{overflow-x:auto;padding-bottom:20px}
+.tree-scroll::-webkit-scrollbar{height:5px}
+.tree-scroll::-webkit-scrollbar-track{background:transparent}
+.tree-scroll::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+.tree-wrap{position:relative;min-width:1300px;padding:48px 60px 80px}
+
+/* Nodes */
+.nd{background:var(--node-bg);border:0.5px solid var(--node-border);border-radius:var(--rl);padding:14px 24px;text-align:center;transition:all .25s;cursor:pointer;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1;backdrop-filter:blur(8px)}
+.nd:hover{border-color:var(--node-border-hover);transform:translateY(-1px);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.nd-root{padding:18px 32px;border-color:rgba(255,255,255,0.08)}
+.nd-root:hover{border-color:rgba(255,255,255,0.15)}
+
+.nd-hdr{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px}
+.gt{font-size:8px;font-weight:600;letter-spacing:0.6px;padding:3px 8px;border-radius:4px}
+.gt-and{background:var(--accent-dim);color:var(--accent);border:0.5px solid rgba(232,145,58,0.15)}
+.gt-leaf{background:var(--green-dim);color:var(--green);border:0.5px solid rgba(93,202,122,0.12)}
+
+/* Probability with colored underline bar */
+.nd-p-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.nd-p{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:500;letter-spacing:-0.5px}
+.nd-root .nd-p{font-size:26px}
+.nd-p-bar{height:3px;width:60px;border-radius:2px;transition:background .3s}
+.nd-root .nd-p-bar{width:80px}
+
+.nd-t{font-size:15px;font-weight:500;line-height:1.3;margin:6px 0 3px;color:#eae8e0}
+.nd-root .nd-t{font-size:18px;margin:6px 0 4px}
+.nd-n{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--tx3);margin-bottom:6px;letter-spacing:0.3px}
+.nd-d{font-size:11px;color:var(--tx2);line-height:1.5;font-weight:300}
+.nd-click{font-size:8px;color:var(--tx3);margin-top:4px;opacity:0;transition:opacity .2s;font-style:italic}
+.nd:hover .nd-click{opacity:0.6}
+
+.sl{margin-top:auto;padding-top:8px}
+.sl input[type=range]{width:100%;height:3px;-webkit-appearance:none;appearance:none;background:var(--bg4);border-radius:2px;outline:none;cursor:pointer}
+.sl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg2);box-shadow:0 2px 8px rgba(232,145,58,0.3);transition:transform .1s}
+.sl input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+.sl input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg2)}
+.sl-v{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx3);text-align:center;margin-top:4px}
+
+.gl{font-size:8px;font-weight:500;color:var(--tx3);text-transform:uppercase;letter-spacing:0.8px;text-align:center;padding:4px 0;position:relative;z-index:1}
+.p-high{color:#e24b4a}.p-med{color:#e8913a}.p-low{color:#f0b060}.p-safe{color:#5dca7a}
+.bar-high{background:#e24b4a}.bar-med{background:#e8913a}.bar-low{background:#f0b060}.bar-safe{background:#5dca7a}
+
+.tier{display:flex;justify-content:center;align-items:stretch;gap:60px;position:relative;z-index:1}
+.tier>.nd{flex:0 0 auto}
+.tier-gap{height:100px}
+.tier-gap-sm{height:36px}
+.w-root{width:500px;min-height:140px}
+.w-leaf{width:320px;min-height:160px}
+
+/* Overlays */
+.overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);z-index:100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.overlay.open{display:flex}
+.overlay-panel{background:var(--bg2);border:0.5px solid var(--node-border-hover);border-radius:var(--rl);padding:32px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;position:relative;box-shadow:0 24px 80px rgba(0,0,0,0.5)}
+.overlay-panel::-webkit-scrollbar{width:3px}
+.overlay-panel::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
+.overlay-close{position:absolute;top:16px;right:18px;background:transparent;border:none;color:var(--tx3);font-size:18px;cursor:pointer;line-height:1;padding:4px;transition:color .15s}
+.overlay-close:hover{color:var(--tx)}
+
+.detail-gate{display:inline-block;font-size:9px;font-weight:600;letter-spacing:0.5px;padding:3px 8px;border-radius:4px;margin-bottom:12px}
+.detail-title{font-size:22px;font-weight:600;margin-bottom:4px;color:#eae8e0}
+.detail-notation{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--tx3);margin-bottom:16px}
+.detail-prob{font-family:'IBM Plex Mono',monospace;font-size:36px;font-weight:500;margin-bottom:20px;letter-spacing:-1px}
+.detail-section{margin-bottom:16px}
+.detail-section h4{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.detail-section p{font-size:14px;color:var(--tx2);line-height:1.7;font-weight:300}
+
+.defs-title{font-size:18px;font-weight:600;margin-bottom:16px;color:#eae8e0}
+.dr{display:flex;gap:6px;margin:4px 0;line-height:1.6;align-items:baseline}
+.ds{font-family:'IBM Plex Mono',monospace;min-width:52px;color:var(--accent);font-weight:500;font-size:11px;flex-shrink:0}
+.de{color:var(--tx3);min-width:12px;flex-shrink:0}
+.dt{color:var(--tx2);font-size:12px;font-weight:300}
+.d-dd{border-top:0.5px solid rgba(255,255,255,0.04);margin:10px 0}
+.d-hl{font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--bg3);padding:12px 16px;border-radius:10px;color:var(--tx);border:0.5px solid var(--node-border);margin:10px 0;line-height:1.8}
+.d-sub{color:var(--tx2);font-size:11px;margin-top:3px;padding-left:68px;font-weight:300}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="tag">AISC project 19 — environment-first</div>
+    <h1>Doom Assumptions</h1>
+    <p>An interactive map of AI risk. Danger is a property of the configuration between optimization and environment. Adjust the assumptions and see how P(Doom) changes.</p>
+  </header>
+  <div class="controls">
+    <div class="cg" style="flex:1.5"><label>Scenario</label><input type="text" id="scenario-input" placeholder="e.g. grey goo, epistemic collapse..." oninput="recalc()"></div>
+    <div class="cg"><label>Risk vector</label><select id="risk-vector" onchange="applyPreset()"><option value="autonomous">Autonomous misaligned</option><option value="misuse">Human misuse</option><option value="emergent">Emergent dynamics</option></select></div>
+    <div class="cg"><label>Substrate</label><select id="substrate" onchange="applyPreset()"><option value="human">Human life</option><option value="environment">Sustaining environment</option><option value="infrastructure">Infrastructure / civilization</option></select></div>
+    <div class="cg"><label>Time window</label><select id="timewindow" onchange="recalc()"><option value="10">10 years</option><option value="30" selected>30 years</option><option value="100">100 years</option></select></div>
+    <button class="btn-r" onclick="applyPreset()">Reset</button>
+  </div>
+  <div class="pdoom">
+    <div class="pdoom-lbl">P(Doom)</div>
+    <div class="pdoom-val" id="pdoom-val">—</div>
+    <div class="pdoom-bar"><div class="pdoom-bar-fill" id="pdoom-fill"></div></div>
+    <div class="pdoom-scn" id="pdoom-scn"></div>
+  </div>
+  <button class="defs-btn" onclick="document.getElementById('defs-overlay').classList.add('open')">definitions ↓</button>
+  <div class="tree-scroll"><div class="tree-wrap" id="tree-wrap"></div></div>
+</div>
+
+<div class="overlay" id="defs-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="overlay-panel" style="max-width:480px">
+    <button class="overlay-close" onclick="document.getElementById('defs-overlay').classList.remove('open')">&#x2715;</button>
+    <div class="defs-title">Notation</div>
+    <div class="dr"><span class="ds">E</span><span class="de">=</span><span class="dt">environment (internally coupled such that changes propagate to K)</span></div>
+    <div class="dr"><span class="ds">K</span><span class="de">=</span><span class="dt">dangerous conditions (subset of E)</span></div>
+    <div class="dr"><span class="ds">K₀</span><span class="de">=</span><span class="dt">current state of K at time t</span></div>
+    <div class="dr"><span class="ds">K+</span><span class="de">=</span><span class="dt">K worsening</span></div>
+    <div class="dr"><span class="ds">t</span><span class="de">=</span><span class="dt">point in time at which K and R₀ are sampled</span></div>
+    <div class="dr"><span class="ds">R₀</span><span class="de">=</span><span class="dt">rate of change of K at t (current trajectory)</span></div>
+    <div class="dr"><span class="ds">Rc</span><span class="de">=</span><span class="dt">rate at which corrective capacity can negate K+</span></div>
+    <div class="dr"><span class="ds">O</span><span class="de">=</span><span class="dt">optimization (preference ordering of actions to change E)</span></div>
+    <div class="dr"><span class="ds">M</span><span class="de">=</span><span class="dt">K is mutable (accessible, changeable)</span></div>
+    <div class="d-dd"></div>
+    <div class="d-hl">DAI = AI where K+ | O &gt; R₀</div>
+    <div class="d-sub">AI optimization accelerates dangerous conditions worsening beyond current trajectory</div>
+    <div class="d-hl">Lock in = K+ &gt; Rc</div>
+    <div class="d-sub">worsening outpaces corrective capacity</div>
+    <div class="d-hl">D = DAI ∧ Lock in</div>
+    <div class="d-sub">AI made it worse and it can't be corrected fast enough</div>
+  </div>
+</div>
+
+<div class="overlay" id="detail-overlay" onclick="if(event.target===this)closeDetail()">
+  <div class="overlay-panel" id="detail-panel"></div>
+</div>
+
+<script>
+const PR={autonomous:{human:{M:85,C:50,lock:45},environment:{M:90,C:45,lock:48},infrastructure:{M:88,C:55,lock:42}},misuse:{human:{M:90,C:70,lock:40},environment:{M:85,C:60,lock:44},infrastructure:{M:92,C:72,lock:38}},emergent:{human:{M:95,C:65,lock:58},environment:{M:95,C:60,lock:62},infrastructure:{M:96,C:70,lock:52}}};
+
+const DESC={
+  autonomous:{M:"Can autonomous AI systems access and alter the dangerous conditions within the environment, directly or indirectly?",C:"Does autonomous AI optimization have sufficient capability to change K — whether by directly targeting dangerous conditions or through cascading effects across coupled systems in E?",lock:"Does the rate of worsening outpace corrective capacity?"},
+  misuse:{M:"Can human-directed AI systems access and alter the dangerous conditions within the environment, directly or indirectly?",C:"Can a motivated human actor leverage AI capability sufficiently to change K — through direct action or cascading effects?",lock:"Does the rate of worsening outpace corrective capacity?"},
+  emergent:{M:"Can the aggregate effects of deployed AI systems access and alter the dangerous conditions within the environment, directly or indirectly?",C:"Does the AI ecosystem — collectively — have sufficient capability to shift K through aggregate dynamics and environmental coupling?",lock:"Does the rate of worsening outpace corrective capacity?"}
+};
+
+const DETAIL={
+  doom:{title:"Doom",gate:"AND",gateClass:"gt-and",notation:"D = DAI ∧ Lock in",desc:"Doom occurs when AI optimization worsens dangerous conditions faster than corrective capacity can reverse them."},
+  dai:{title:"AI increases P(Doom)",gate:"AND",gateClass:"gt-and",notation:"DAI = K+ | O > R₀",desc:"An AI whose optimization accelerates the worsening of dangerous conditions beyond the current rate is considered dangerous (DAI). The baseline R₀ may include existing AI effects — this asks whether additional or scaled optimization makes things worse than the current trajectory. Agnostic of intent: malicious, misused, or incidental."},
+  M:{title:"K is mutable",gate:"LEAF",gateClass:"gt-leaf",notation:"M",desc:"The dangerous conditions within the environment are accessible and changeable. This is a property of the environment, not of the AI. If K can't be changed, optimization can't worsen it."},
+  C:{title:"O sufficient to mutate K",gate:"LEAF",gateClass:"gt-leaf",notation:"C",desc:"The optimization process has enough capability to change K. This can happen directly (O targets K) or indirectly through environmental coupling (O targets some other part of E and effects cascade to K)."},
+  lock:{title:"Lock in",gate:"LEAF",gateClass:"gt-leaf",notation:"K+ > Rc",desc:"The rate at which K worsens exceeds corrective capacity to reverse it. Locking in a trajectory."}
+};
+
+let s={};
+const g=k=>s[k]/100;
+const pCol=v=>v>20?'p-high':v>10?'p-med':v>5?'p-low':'p-safe';
+const barCol=v=>v>20?'bar-high':v>10?'bar-med':v>5?'bar-low':'bar-safe';
+const pFmt=v=>v<0.01?v.toExponential(1):v<1?v.toFixed(2)+'%':v.toFixed(1)+'%';
+
+function recalc(){
+  const dai=g('M')*g('C');
+  const doom=dai*g('lock');
+  upNode('p-dai','pb-dai',dai*100);
+  upNode('p-doom','pb-doom',doom*100);
+  Object.keys(s).forEach(k=>{
+    const e=document.getElementById('lv-'+k);if(e)e.textContent=s[k]+'%';
+    const b=document.getElementById('pb-'+k);if(b){b.className='nd-p-bar '+barCol(s[k]);b.style.width=Math.max(20,s[k]*0.6)+'px'}
+  });
+  const pct=doom*100,ve=document.getElementById('pdoom-val'),fe=document.getElementById('pdoom-fill');
+  ve.textContent=pFmt(pct);ve.className='pdoom-val '+pCol(pct);
+  fe.style.width=Math.min(pct,100)+'%';fe.style.background=pct>20?'#e24b4a':pct>10?'#e8913a':pct>5?'#f0b060':'#5dca7a';
+  const sc=document.getElementById('scenario-input').value;
+  const rv={autonomous:'autonomous misaligned',misuse:'human misuse',emergent:'emergent dynamics'}[document.getElementById('risk-vector').value];
+  const sb={human:'human life',environment:'sustaining environment',infrastructure:'infrastructure / civilization'}[document.getElementById('substrate').value];
+  const tw=document.getElementById('timewindow').value;
+  document.getElementById('pdoom-scn').textContent=sc?`${sc} — ${rv} → ${sb} — ${tw}yr window`:`${rv} → ${sb} — ${tw}yr window`;
+}
+function upNode(pid,bid,v){
+  const e=document.getElementById(pid);if(e){e.textContent=pFmt(v);e.className='nd-p '+pCol(v)}
+  const b=document.getElementById(bid);if(b){b.className='nd-p-bar '+barCol(v);b.style.width=Math.max(20,v*0.8)+'px'}
+}
+function onS(k,v){s[k]=+v;recalc()}
+
+function lf(k,title,notn,detKey){
+  const rv=document.getElementById('risk-vector').value;
+  return`<div class="nd w-leaf" data-nid="${detKey||k}" onclick="openDetail('${detKey||k}')">
+    <div class="nd-hdr"><span class="gt gt-leaf">LEAF</span></div>
+    <div class="nd-p-wrap"><span class="nd-p" id="lv-${k}">${s[k]}%</span><div class="nd-p-bar" id="pb-${k}"></div></div>
+    <div class="nd-t">${title}</div>
+    ${notn?`<div class="nd-n">${notn}</div>`:''}
+    <div class="nd-d">${DESC[rv][k]}</div>
+    <div class="nd-click">Click a node to see its details.</div>
+    <div class="sl" onclick="event.stopPropagation()"><input type="range" min="1" max="99" value="${s[k]}" step="1" oninput="onS('${k}',this.value)"><div class="sl-v">${s[k]}%</div></div>
+  </div>`;
+}
+
+function openDetail(key){
+  const d=DETAIL[key];if(!d)return;
+  const prob=document.getElementById('p-'+key)||document.getElementById('lv-'+key);
+  const probText=prob?prob.textContent:'—';
+  document.getElementById('detail-panel').innerHTML=`
+    <button class="overlay-close" onclick="closeDetail()">&#x2715;</button>
+    <div class="detail-gate ${d.gateClass}">${d.gate}</div>
+    <div class="detail-title">${d.title}</div>
+    ${d.notation?`<div class="detail-notation">${d.notation}</div>`:''}
+    <div class="detail-prob ${pCol(parseFloat(probText))}">${probText}</div>
+    <div class="detail-section"><h4>What this captures</h4><p>${d.desc}</p></div>`;
+  document.getElementById('detail-overlay').classList.add('open');
+}
+function closeDetail(){document.getElementById('detail-overlay').classList.remove('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetail();document.getElementById('defs-overlay').classList.remove('open')}});
+
+function applyPreset(){
+  s={...PR[document.getElementById('risk-vector').value][document.getElementById('substrate').value]};
+  render();recalc();
+}
+
+function render(){
+  const w=document.getElementById('tree-wrap');
+  const rv=document.getElementById('risk-vector').value;
+  w.innerHTML=`
+    <!-- Tier 0: Doom -->
+    <div class="tier">
+      <div class="nd nd-root w-root" data-nid="doom" onclick="openDetail('doom')">
+        <div class="nd-hdr"><span class="gt gt-and">AND</span></div>
+        <div class="nd-p-wrap"><span class="nd-p" id="p-doom">—</span><div class="nd-p-bar" id="pb-doom"></div></div>
+        <div class="nd-t">Doom</div>
+        <div class="nd-n">D = DAI ∧ Lock in</div>
+        <div class="nd-d">AI optimization accelerates trajectory towards doom, outpacing corrective capacity</div>
+        <div class="nd-click">Click a node to see its details.</div>
+      </div>
+    </div>
+    <div class="tier-gap"></div>
+
+    <!-- Tier 1+2: Two columns - DAI branch left, Lock in right -->
+    <div style="display:flex;justify-content:center;gap:100px;align-items:flex-start;position:relative;z-index:1">
+
+      <!-- Left column: DAI with M+C beneath -->
+      <div style="display:flex;flex-direction:column;align-items:center">
+        <div class="nd" data-nid="dai" onclick="openDetail('dai')" style="width:400px">
+          <div class="nd-hdr"><span class="gt gt-and">AND</span></div>
+          <div class="nd-p-wrap"><span class="nd-p" id="p-dai">—</span><div class="nd-p-bar" id="pb-dai"></div></div>
+          <div class="nd-t">AI increases P(Doom)</div>
+          <div class="nd-n">DAI = K+ | O > R₀</div>
+          <div class="nd-d">An AI whose optimization accelerates the worsening of dangerous conditions beyond the current rate</div>
+          <div class="nd-click">Click a node to see its details.</div>
+        </div>
+        <div style="height:100px"></div>
+        <div style="display:flex;gap:48px;justify-content:center">
+          <div style="width:300px">${lf('M','K is mutable','M','M')}</div>
+          <div style="width:300px">${lf('C','O sufficient to mutate K','C','C')}</div>
+        </div>
+      </div>
+
+      <!-- Right column: Lock in -->
+      <div style="display:flex;flex-direction:column;align-items:center">
+        <div style="width:340px">${lf('lock','Lock in','K+ > Rc','lock')}</div>
+      </div>
+
+    </div>
+  `;
+  requestAnimationFrame(()=>requestAnimationFrame(drawLines));
+}
+
+function drawLines(){
+  const w=document.getElementById('tree-wrap');
+  const old=w.querySelector('svg');if(old)old.remove();
+  const wr=w.getBoundingClientRect();
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width',wr.width);svg.setAttribute('height',wr.height);
+  svg.style.cssText='position:absolute;top:0;left:0;pointer-events:none;z-index:0';
+
+  function cx(el){const r=el.getBoundingClientRect();return r.left-wr.left+r.width/2}
+  function tp(el){return el.getBoundingClientRect().top-wr.top}
+  function bt(el){return el.getBoundingClientRect().bottom-wr.top}
+
+  // Draw a dot
+  function dot(x,y){
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r','3');
+    c.setAttribute('fill','var(--dot-color)');
+    svg.appendChild(c);
+  }
+
+  function connect(parentNid,childNids){
+    const parent=w.querySelector(`[data-nid="${parentNid}"]`);
+    const children=childNids.map(n=>w.querySelector(`[data-nid="${n}"]`)).filter(Boolean);
+    if(!parent||!children.length)return;
+    const px=cx(parent),py=bt(parent);
+    const firstTop=tp(children[0]);
+    const midY=py+(firstTop-py)*0.45;
+    dot(px,py);
+    const vline=document.createElementNS('http://www.w3.org/2000/svg','line');
+    vline.setAttribute('x1',px);vline.setAttribute('y1',py);vline.setAttribute('x2',px);vline.setAttribute('y2',midY);
+    vline.setAttribute('stroke','rgba(255,255,255,0.08)');vline.setAttribute('stroke-width','1.5');
+    svg.appendChild(vline);
+    dot(px,midY);
+    children.forEach(c=>{
+      const ccx=cx(c),cty=tp(c);
+      const dy=cty-midY;
+      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d',`M${px},${midY} C${px},${midY+dy*0.4} ${ccx},${cty-dy*0.4} ${ccx},${cty}`);
+      path.setAttribute('stroke','rgba(255,255,255,0.08)');path.setAttribute('stroke-width','1.5');path.setAttribute('fill','none');
+      svg.appendChild(path);
+      dot(ccx,cty);
+    });
+  }
+
+  connect('doom',['dai','lock']);
+  connect('dai',['M','C']);
+
+  w.appendChild(svg);
+}
+
+window.addEventListener('resize',()=>requestAnimationFrame(drawLines));
+applyPreset();
+</script>
+</body>
+</html>
