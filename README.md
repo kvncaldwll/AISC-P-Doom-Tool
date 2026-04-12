@@ -31,12 +31,15 @@ this is agnostic of:
 - C = O sufficient to change E
 
 DAI = AI where K+ | O > R₀
+
 AI optimization accelerates dangerous conditions worsening beyond current trajectory
 
 Lock in = K+ > Rc
+
 worsening outpaces corrective capacity
 
 Doom = DAI ∧ Lock in
+
 AI accelerates worsening AND corrective capacity can't keep up
 
 P(Doom) = P(M) × P(C) × P(Lock in)
