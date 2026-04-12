@@ -1,7 +1,7 @@
 **AI existential risk probability tree**
 
 an interactive tool for mapping probabilites for AI-caused doom
-built as part of [AISC - Project 19](url)
+built as part of [AISC - Project 19: Investigating the assumptions of the Doom Debate](https://www.aisafety.camp/#h.pxd3zndm22u4)
 
 
 **Framing**
@@ -38,14 +38,6 @@ worsening outpaces corrective capacity
 
 Doom = DAI ∧ Lock in
 AI accelerates worsening AND corrective capacity can't keep up
-
-**Tree**
-
-Doom [AND] — D = DAI ∧ Lock in
-├── AI increases P(Doom) [AND] — DAI = K+ | O > R₀
-│   ├── K is mutable [LEAF] — M
-│   └── O sufficient to mutate K [LEAF] — C
-└── Lock in [LEAF] — K+ > Rc
 
 P(Doom) = P(M) × P(C) × P(Lock in)
 
