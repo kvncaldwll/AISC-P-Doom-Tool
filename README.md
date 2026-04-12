@@ -19,16 +19,16 @@ this is agnostic of:
 
 **notation**
 
-E = environment (internally coupled such that changes propagate to K)
-K = dangerous conditions (subset of E)
-K₀ = current state of K at time t
-K+ = K worsening
-t = point in time at which K and R₀ are sampled
-R₀ = rate of change of K at t (baseline, current trajectory)
-Rc = rate at which corrective capacity can negate K+
-O = optimization (preference ordering of actions to achieve desired outcome)
-M = K is mutable (accessible, changeable)
-C = O sufficient to change E
+- E = environment (internally coupled such that changes propagate to K)
+- K = dangerous conditions (subset of E)
+- K₀ = current state of K at time t
+- K+ = K worsening
+- t = point in time at which K and R₀ are sampled
+- R₀ = rate of change of K at t (baseline, current trajectory)
+- Rc = rate at which corrective capacity can negate K+
+- O = optimization (preference ordering of actions to achieve desired outcome)
+- M = K is mutable (accessible, changeable)
+- C = O sufficient to change E
 
 DAI = AI where K+ | O > R₀
 AI optimization accelerates dangerous conditions worsening beyond current trajectory
