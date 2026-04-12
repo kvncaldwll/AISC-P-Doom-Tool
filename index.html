@@ -3,124 +3,135 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Doom Assumptions — Environment-First</title>
+<title>Doom Assumptions — Trajectory Comparison</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
---bg:#0c0d10;--bg2:#14151a;--bg3:#1a1b22;--bg4:#24252e;
---tx:#d8d6ce;--tx2:#908e86;--tx3:#5e5d58;
---accent:#e8913a;--accent2:#f0b060;--accent-dim:rgba(232,145,58,0.10);
---green:#5dca7a;--green-dim:rgba(93,202,122,0.08);
---purple:#9b7aed;--purple-dim:rgba(155,122,237,0.08);
---teal:#4fc4a8;--teal-dim:rgba(79,196,168,0.08);
---node-bg:rgba(18,19,25,0.85);--node-border:rgba(255,255,255,0.06);--node-border-hover:rgba(255,255,255,0.12);
---line-color:rgba(255,255,255,0.08);--dot-color:rgba(255,255,255,0.2);
---r:12px;--rl:16px;
-}
+:root{--bg:#0c0d10;--bg2:#14151a;--bg3:#1a1b22;--bg4:#24252e;--tx:#d8d6ce;--tx2:#908e86;--tx3:#5e5d58;--accent:#e8913a;--accent-dim:rgba(232,145,58,0.10);--green:#5dca7a;--red:#e24b4a;--blue:#5b9cf0;--node-bg:rgba(18,19,25,0.85);--node-border:rgba(255,255,255,0.06);--node-hover:rgba(255,255,255,0.12);--r:10px;--rl:14px}
 body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5}
-.app{max-width:1400px;margin:0 auto;padding:32px 24px 80px}
-
-header{margin-bottom:36px;text-align:center}
+.app{max-width:1300px;margin:0 auto;padding:28px 24px 80px}
+header{margin-bottom:24px;text-align:center}
 .tag{display:inline-block;background:linear-gradient(135deg,rgba(232,145,58,0.15),rgba(232,145,58,0.05));color:var(--accent);font-size:9px;font-weight:600;padding:5px 14px;border-radius:20px;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase;border:0.5px solid rgba(232,145,58,0.2)}
-header h1{font-size:32px;font-weight:600;letter-spacing:-0.5px;margin-bottom:8px;color:#eae8e0}
+header h1{font-size:28px;font-weight:600;letter-spacing:-0.5px;margin-bottom:8px;color:#eae8e0}
 header p{color:var(--tx2);font-size:13px;max-width:520px;margin:0 auto;line-height:1.7;font-weight:300}
 
-.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:28px;padding:16px 20px;background:var(--bg2);border:0.5px solid var(--node-border);border-radius:var(--rl);backdrop-filter:blur(4px)}
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:0.5px solid var(--node-border);margin-bottom:24px}
+.tab{padding:10px 24px;font-size:13px;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-weight:400}
+.tab:hover{color:var(--tx2)}
+.tab.active{color:var(--tx);border-bottom-color:var(--accent);font-weight:500}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Shared controls */
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px;padding:14px 18px;background:var(--bg2);border:0.5px solid var(--node-border);border-radius:var(--rl)}
 .cg{display:flex;flex-direction:column;gap:4px}
 .cg label{font-size:8px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:1px}
-.cg input[type=text]{background:var(--bg3);border:0.5px solid var(--node-border);border-radius:8px;padding:9px 14px;color:var(--tx);font-size:13px;font-family:inherit;width:220px;outline:none;transition:border .2s}
-.cg input[type=text]:focus{border-color:rgba(232,145,58,0.4)}
+.cg select,.cg input[type=text]{background:var(--bg3);border:0.5px solid var(--node-border);border-radius:8px;padding:8px 12px;color:var(--tx);font-size:13px;font-family:inherit;outline:none}
+.cg select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%235e5d58' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.cg input[type=text]{width:180px}
 .cg input[type=text]::placeholder{color:var(--tx3)}
-.cg select{background:var(--bg3);border:0.5px solid var(--node-border);border-radius:8px;padding:9px 14px;color:var(--tx);font-size:13px;font-family:inherit;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%235e5d58' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
-.btn-r{background:transparent;border:0.5px solid var(--node-border);border-radius:8px;padding:9px 16px;color:var(--tx3);font-size:11px;font-family:inherit;cursor:pointer;transition:all .15s;align-self:flex-end}
-.btn-r:hover{border-color:var(--node-border-hover);color:var(--tx)}
+.btn-r{background:transparent;border:0.5px solid var(--node-border);border-radius:8px;padding:8px 14px;color:var(--tx3);font-size:11px;font-family:inherit;cursor:pointer;align-self:flex-end}
+.btn-r:hover{color:var(--tx)}
 
-.pdoom{margin-bottom:28px;padding:24px;background:var(--bg2);border:0.5px solid var(--node-border);border-radius:var(--rl);text-align:center}
-.pdoom-lbl{font-size:9px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:6px}
-.pdoom-val{font-family:'IBM Plex Mono',monospace;font-size:48px;font-weight:500;transition:color .3s;line-height:1.1;letter-spacing:-1px}
-.pdoom-bar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin:14px auto 0;max-width:200px}
-.pdoom-bar-fill{height:100%;border-radius:2px;transition:width .4s,background .3s}
-.pdoom-scn{font-size:11px;color:var(--tx3);margin-top:10px;font-style:italic;font-weight:300}
-
-.defs-btn{background:transparent;border:0.5px solid var(--node-border);border-radius:8px;padding:6px 14px;color:var(--tx3);font-size:11px;font-family:inherit;cursor:pointer;margin-bottom:20px;transition:all .15s}
-.defs-btn:hover{color:var(--tx);border-color:var(--node-border-hover)}
-
-/* Tree */
-.tree-scroll{overflow-x:auto;padding-bottom:20px}
-.tree-scroll::-webkit-scrollbar{height:5px}
-.tree-scroll::-webkit-scrollbar-track{background:transparent}
-.tree-scroll::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
-.tree-wrap{position:relative;min-width:1300px;padding:48px 60px 80px}
-
-/* Nodes */
-.nd{background:var(--node-bg);border:0.5px solid var(--node-border);border-radius:var(--rl);padding:14px 24px;text-align:center;transition:all .25s;cursor:pointer;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1;backdrop-filter:blur(8px)}
-.nd:hover{border-color:var(--node-border-hover);transform:translateY(-1px);box-shadow:0 8px 32px rgba(0,0,0,0.3)}
-.nd-root{padding:18px 32px;border-color:rgba(255,255,255,0.08)}
-.nd-root:hover{border-color:rgba(255,255,255,0.15)}
-
-.nd-hdr{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px}
-.gt{font-size:8px;font-weight:600;letter-spacing:0.6px;padding:3px 8px;border-radius:4px}
-.gt-and{background:var(--accent-dim);color:var(--accent);border:0.5px solid rgba(232,145,58,0.15)}
-.gt-leaf{background:var(--green-dim);color:var(--green);border:0.5px solid rgba(93,202,122,0.12)}
-
-/* Probability with colored underline bar */
-.nd-p-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
-.nd-p{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:500;letter-spacing:-0.5px}
-.nd-root .nd-p{font-size:26px}
-.nd-p-bar{height:3px;width:60px;border-radius:2px;transition:background .3s}
-.nd-root .nd-p-bar{width:80px}
-
-.nd-t{font-size:15px;font-weight:500;line-height:1.3;margin:6px 0 3px;color:#eae8e0}
-.nd-root .nd-t{font-size:18px;margin:6px 0 4px}
-.nd-n{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--tx3);margin-bottom:6px;letter-spacing:0.3px}
-.nd-d{font-size:11px;color:var(--tx2);line-height:1.5;font-weight:300}
-.nd-click{font-size:8px;color:var(--tx3);margin-top:4px;opacity:0;transition:opacity .2s;font-style:italic}
-.nd:hover .nd-click{opacity:0.6}
-
-.sl{margin-top:auto;padding-top:8px}
-.sl input[type=range]{width:100%;height:3px;-webkit-appearance:none;appearance:none;background:var(--bg4);border-radius:2px;outline:none;cursor:pointer}
-.sl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg2);box-shadow:0 2px 8px rgba(232,145,58,0.3);transition:transform .1s}
-.sl input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15)}
-.sl input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg2)}
-.sl-v{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--tx3);text-align:center;margin-top:4px}
-
-.gl{font-size:8px;font-weight:500;color:var(--tx3);text-transform:uppercase;letter-spacing:0.8px;text-align:center;padding:4px 0;position:relative;z-index:1}
-.p-high{color:#e24b4a}.p-med{color:#e8913a}.p-low{color:#f0b060}.p-safe{color:#5dca7a}
-.bar-high{background:#e24b4a}.bar-med{background:#e8913a}.bar-low{background:#f0b060}.bar-safe{background:#5dca7a}
-
-.tier{display:flex;justify-content:center;align-items:stretch;gap:60px;position:relative;z-index:1}
-.tier>.nd{flex:0 0 auto}
-.tier-gap{height:100px}
-.tier-gap-sm{height:36px}
-.w-root{width:500px;min-height:140px}
-.w-leaf{width:320px;min-height:160px}
-
-/* Overlays */
+/* Defs */
+.defs-btn{background:transparent;border:0.5px solid var(--node-border);border-radius:8px;padding:6px 14px;color:var(--tx3);font-size:11px;font-family:inherit;cursor:pointer;margin-bottom:20px}
+.defs-btn:hover{color:var(--tx)}
 .overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);z-index:100;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
 .overlay.open{display:flex}
-.overlay-panel{background:var(--bg2);border:0.5px solid var(--node-border-hover);border-radius:var(--rl);padding:32px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;position:relative;box-shadow:0 24px 80px rgba(0,0,0,0.5)}
-.overlay-panel::-webkit-scrollbar{width:3px}
-.overlay-panel::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px}
-.overlay-close{position:absolute;top:16px;right:18px;background:transparent;border:none;color:var(--tx3);font-size:18px;cursor:pointer;line-height:1;padding:4px;transition:color .15s}
+.overlay-panel{background:var(--bg2);border:0.5px solid var(--node-hover);border-radius:var(--rl);padding:28px 32px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;position:relative;box-shadow:0 24px 80px rgba(0,0,0,0.5)}
+.overlay-close{position:absolute;top:14px;right:16px;background:transparent;border:none;color:var(--tx3);font-size:18px;cursor:pointer}
 .overlay-close:hover{color:var(--tx)}
-
-.detail-gate{display:inline-block;font-size:9px;font-weight:600;letter-spacing:0.5px;padding:3px 8px;border-radius:4px;margin-bottom:12px}
-.detail-title{font-size:22px;font-weight:600;margin-bottom:4px;color:#eae8e0}
-.detail-notation{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--tx3);margin-bottom:16px}
-.detail-prob{font-family:'IBM Plex Mono',monospace;font-size:36px;font-weight:500;margin-bottom:20px;letter-spacing:-1px}
-.detail-section{margin-bottom:16px}
-.detail-section h4{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
-.detail-section p{font-size:14px;color:var(--tx2);line-height:1.7;font-weight:300}
-
-.defs-title{font-size:18px;font-weight:600;margin-bottom:16px;color:#eae8e0}
+.defs-title{font-size:16px;font-weight:600;margin-bottom:14px;color:#eae8e0}
 .dr{display:flex;gap:6px;margin:4px 0;line-height:1.6;align-items:baseline}
 .ds{font-family:'IBM Plex Mono',monospace;min-width:52px;color:var(--accent);font-weight:500;font-size:11px;flex-shrink:0}
 .de{color:var(--tx3);min-width:12px;flex-shrink:0}
 .dt{color:var(--tx2);font-size:12px;font-weight:300}
 .d-dd{border-top:0.5px solid rgba(255,255,255,0.04);margin:10px 0}
-.d-hl{font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--bg3);padding:12px 16px;border-radius:10px;color:var(--tx);border:0.5px solid var(--node-border);margin:10px 0;line-height:1.8}
+.d-hl{font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--bg3);padding:12px 16px;border-radius:var(--r);color:var(--tx);border:0.5px solid var(--node-border);margin:10px 0;line-height:1.8}
 .d-sub{color:var(--tx2);font-size:11px;margin-top:3px;padding-left:68px;font-weight:300}
+
+/* ====== SINGLE SCENARIO TAB ====== */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.panel{background:var(--node-bg);border:0.5px solid var(--node-border);border-radius:var(--rl);padding:20px 24px;backdrop-filter:blur(8px)}
+.panel:hover{border-color:var(--node-hover)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.panel-title{font-size:15px;font-weight:500;color:#eae8e0}
+.panel-date select{background:var(--bg3);border:0.5px solid var(--node-border);border-radius:6px;padding:6px 10px;color:var(--tx);font-size:12px;font-family:inherit;-webkit-appearance:none;appearance:none;outline:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%235e5d58' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px}
+.node-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid rgba(255,255,255,0.04)}
+.node-row:last-of-type{border-bottom:none}
+.node-name{font-size:13px;font-weight:500;color:#eae8e0}
+.node-notation{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--tx3);margin-top:1px}
+.node-control{display:flex;align-items:center;gap:10px}
+.nslider{width:120px;height:20px;-webkit-appearance:none;appearance:none;background:transparent;outline:none;cursor:pointer;margin:0}
+.nslider::-webkit-slider-runnable-track{height:4px;background:var(--bg4);border-radius:2px}
+.nslider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg2);box-shadow:0 2px 8px rgba(232,145,58,0.3);margin-top:-6px}
+.nslider::-moz-range-track{height:4px;background:var(--bg4);border-radius:2px;border:none}
+.nslider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg2)}
+.node-pct{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;min-width:40px;text-align:right}
+.panel-pdoom{text-align:center;padding:16px 0 4px;margin-top:8px;border-top:0.5px solid rgba(255,255,255,0.04)}
+.panel-pdoom-label{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+.panel-pdoom-val{font-family:'IBM Plex Mono',monospace;font-size:32px;font-weight:500;letter-spacing:-1px}
+.panel-pdoom-bar{height:3px;width:100px;margin:8px auto 0;background:var(--bg4);border-radius:2px;overflow:hidden}
+.panel-pdoom-fill{height:100%;border-radius:2px}
+.delta{display:flex;align-items:center;justify-content:center;gap:32px;padding:14px 20px;background:var(--bg2);border:0.5px solid var(--node-border);border-radius:var(--rl);margin-bottom:20px}
+.delta-item{text-align:center}
+.delta-label{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px}
+.delta-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:500}
+.chart-wrap{background:var(--node-bg);border:0.5px solid var(--node-border);border-radius:var(--rl);padding:20px 24px}
+.chart-title{font-size:14px;font-weight:500;margin-bottom:12px;color:#eae8e0}
+.chart-container{position:relative;height:240px}
+
+/* ====== ALL TRAJECTORIES TAB ====== */
+.all-layout{display:flex;gap:0;position:relative}
+.all-main{flex:1;min-width:0}
+.all-side{width:260px;flex-shrink:0;background:var(--node-bg);border:0.5px solid var(--node-border);border-radius:var(--rl);padding:20px;backdrop-filter:blur(8px);margin-left:16px;display:none;align-self:flex-start;position:sticky;top:20px}
+.all-side.open{display:block}
+.all-side-title{font-size:14px;font-weight:500;color:#eae8e0;margin-bottom:4px}
+.all-side-sub{font-size:11px;color:var(--tx3);margin-bottom:16px}
+.all-side-section{margin-bottom:12px;padding-bottom:12px;border-bottom:0.5px solid rgba(255,255,255,0.04)}
+.all-side-section:last-child{border-bottom:none}
+.all-side-section-label{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.side-node{display:flex;align-items:center;justify-content:space-between;margin:8px 0}
+.side-node-name{font-size:12px;color:#eae8e0}
+.side-node-ctrl{display:flex;align-items:center;gap:6px}
+.side-slider{width:80px;height:18px;-webkit-appearance:none;appearance:none;background:transparent;outline:none;cursor:pointer;margin:0}
+.side-slider::-webkit-slider-runnable-track{height:3px;background:var(--bg4);border-radius:2px}
+.side-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg2);margin-top:-5.5px}
+.side-slider::-moz-range-track{height:3px;background:var(--bg4);border-radius:2px;border:none}
+.side-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid var(--bg2)}
+.side-pct{font-family:'IBM Plex Mono',monospace;font-size:11px;min-width:32px;text-align:right}
+.side-pdoom{text-align:center;padding-top:8px}
+.side-pdoom-label{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.8px}
+.side-pdoom-val{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:500}
+.side-close{position:absolute;top:12px;right:12px;background:transparent;border:none;color:var(--tx3);font-size:14px;cursor:pointer}
+
+/* Matrix */
+.date-row{display:flex;gap:24px;margin-bottom:16px;align-items:center}
+.date-row label{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.6px}
+.date-row select{background:var(--bg3);border:0.5px solid var(--node-border);border-radius:6px;padding:6px 10px;color:var(--tx);font-size:12px;font-family:inherit;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='8' height='5' viewBox='0 0 8 5' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%235e5d58' stroke-width='1.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px}
+.matrix{display:grid;grid-template-columns:120px repeat(3,1fr);gap:1px;background:rgba(255,255,255,0.03);border-radius:var(--rl);overflow:hidden;margin-bottom:20px;border:0.5px solid var(--node-border)}
+.matrix>div{background:var(--bg2);padding:12px 14px}
+.m-hdr{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:0.6px;text-align:center;padding:10px 12px}
+.m-rlabel{font-size:11px;font-weight:500;color:var(--tx2);display:flex;align-items:center;justify-content:flex-end;text-align:right}
+.m-cell{text-align:center;cursor:pointer;transition:background .15s}
+.m-cell:hover{background:var(--bg3)}
+.m-cell.active{background:var(--bg3);box-shadow:inset 0 0 0 1px var(--accent)}
+.m-cell-base{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--tx3)}
+.m-cell-proj{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:500;margin:2px 0}
+.m-cell-delta{font-family:'IBM Plex Mono',monospace;font-size:10px}
+.m-cell-bar{height:3px;border-radius:2px;margin-top:6px}
+
+/* Insights */
+.insights{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;padding:14px 18px;background:var(--bg2);border:0.5px solid var(--node-border);border-radius:var(--rl);margin-bottom:20px}
+.insight-item{text-align:center;min-width:120px}
+.insight-label{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:2px}
+.insight-val{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500}
+
+.p-high{color:#e24b4a}.p-med{color:#e8913a}.p-low{color:#f0b060}.p-safe{color:#5dca7a}
+
+@media(max-width:900px){.split{grid-template-columns:1fr}.all-side{position:fixed;right:0;top:0;bottom:0;margin:0;border-radius:0;z-index:50;width:280px}}
 </style>
 </head>
 <body>
@@ -128,25 +139,59 @@ header p{color:var(--tx2);font-size:13px;max-width:520px;margin:0 auto;line-heig
   <header>
     <div class="tag">AISC project 19 — environment-first</div>
     <h1>Doom Assumptions</h1>
-    <p>An interactive map of AI risk. Danger is a property of the configuration between optimization and environment. Adjust the assumptions and see how P(Doom) changes.</p>
+    <p>An interactive map of AI risk. Compare snapshots in time. Adjust assumptions and see how trajectories change.</p>
   </header>
-  <div class="controls">
-    <div class="cg" style="flex:1.5"><label>Scenario</label><input type="text" id="scenario-input" placeholder="e.g. grey goo, epistemic collapse..." oninput="recalc()"></div>
-    <div class="cg"><label>Risk vector</label><select id="risk-vector" onchange="applyPreset()"><option value="autonomous">Autonomous misaligned</option><option value="misuse">Human misuse</option><option value="emergent">Emergent dynamics</option></select></div>
-    <div class="cg"><label>Substrate</label><select id="substrate" onchange="applyPreset()"><option value="human">Human life</option><option value="environment">Sustaining environment</option><option value="infrastructure">Infrastructure / civilization</option></select></div>
-    <div class="cg"><label>Time window</label><select id="timewindow" onchange="recalc()"><option value="10">10 years</option><option value="30" selected>30 years</option><option value="100">100 years</option></select></div>
-    <button class="btn-r" onclick="applyPreset()">Reset</button>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('single')">Single scenario</div>
+    <div class="tab" onclick="switchTab('all')">All trajectories</div>
   </div>
-  <div class="pdoom">
-    <div class="pdoom-lbl">P(Doom)</div>
-    <div class="pdoom-val" id="pdoom-val">—</div>
-    <div class="pdoom-bar"><div class="pdoom-bar-fill" id="pdoom-fill"></div></div>
-    <div class="pdoom-scn" id="pdoom-scn"></div>
-  </div>
+
   <button class="defs-btn" onclick="document.getElementById('defs-overlay').classList.add('open')">definitions ↓</button>
-  <div class="tree-scroll"><div class="tree-wrap" id="tree-wrap"></div></div>
+
+  <!-- ====== SINGLE SCENARIO ====== -->
+  <div class="tab-content active" id="tc-single">
+    <div class="controls">
+      <div class="cg"><label>Risk vector</label><select id="s-rv" onchange="sApply()"><option value="autonomous">Misaligned</option><option value="misuse">Human misuse</option><option value="emergent" selected>Emergent dynamics</option></select></div>
+      <div class="cg"><label>Substrate</label><select id="s-sub" onchange="sApply()"><option value="human">Human life</option><option value="environment">Sustaining environment</option><option value="infrastructure">Infrastructure / civilization</option></select></div>
+      <div class="cg" style="flex:1"><label>Scenario</label><input type="text" id="s-scenario" placeholder="e.g. epistemic collapse"></div>
+      <button class="btn-r" onclick="sApply()">Reset</button>
+    </div>
+    <div class="split"><div class="panel" id="sp-base"></div><div class="panel" id="sp-proj" style="border-color:rgba(255,255,255,0.1)"></div></div>
+    <div class="delta" id="s-delta"></div>
+    <div class="chart-wrap"><div class="chart-title">P(Doom) trajectory</div><div class="chart-container"><canvas id="s-chart"></canvas></div></div>
+  </div>
+
+  <!-- ====== ALL TRAJECTORIES ====== -->
+  <div class="tab-content" id="tc-all">
+    <div class="all-layout">
+      <div class="all-main">
+        <div class="date-row">
+          <label>Baseline</label><select id="a-byear" onchange="aRecalc()"></select>
+          <label style="margin-left:12px">Projection</label><select id="a-pyear" onchange="aRecalc()"></select>
+          <button class="btn-r" onclick="aReset()" style="margin-left:auto">Reset all</button>
+        </div>
+        <div class="matrix" id="a-matrix"></div>
+        <div class="insights" id="a-insights"></div>
+        <div class="chart-wrap"><div class="chart-title">P(Doom) — collective trajectory envelope</div><div class="chart-container"><canvas id="a-chart"></canvas></div>
+          <div style="display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:11px;flex-wrap:wrap">
+            <span style="color:var(--tx3)"><span style="display:inline-block;width:16px;height:8px;border-radius:2px;background:rgba(232,145,58,0.08);vertical-align:middle;margin-right:4px;border:0.5px solid rgba(232,145,58,0.2)"></span>Full range</span>
+            <span style="color:var(--tx3)"><span style="display:inline-block;width:16px;height:8px;border-radius:2px;background:rgba(232,145,58,0.18);vertical-align:middle;margin-right:4px;border:0.5px solid rgba(232,145,58,0.3)"></span>Middle 50%</span>
+            <span style="color:var(--accent)"><span style="display:inline-block;width:16px;height:2px;background:var(--accent);vertical-align:middle;margin-right:4px"></span>Median</span>
+            <span style="color:var(--red)"><span style="display:inline-block;width:16px;height:1px;border-top:1px dashed var(--red);vertical-align:middle;margin-right:4px"></span>Worst</span>
+            <span style="color:var(--green)"><span style="display:inline-block;width:16px;height:1px;border-top:1px dashed var(--green);vertical-align:middle;margin-right:4px"></span>Best</span>
+          </div>
+        </div>
+      </div>
+      <div class="all-side" id="a-side">
+        <button class="side-close" onclick="closeSide()">&#x2715;</button>
+        <div id="a-side-content"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- Overlays -->
 <div class="overlay" id="defs-overlay" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="overlay-panel" style="max-width:480px">
     <button class="overlay-close" onclick="document.getElementById('defs-overlay').classList.remove('open')">&#x2715;</button>
@@ -166,194 +211,187 @@ header p{color:var(--tx2);font-size:13px;max-width:520px;margin:0 auto;line-heig
     <div class="d-hl">Lock in = K+ &gt; Rc</div>
     <div class="d-sub">worsening outpaces corrective capacity</div>
     <div class="d-hl">D = DAI ∧ Lock in</div>
-    <div class="d-sub">AI made it worse and it can't be corrected fast enough</div>
+    <div class="d-sub">AI made it worse and corrective capacity can't keep up</div>
   </div>
 </div>
 
-<div class="overlay" id="detail-overlay" onclick="if(event.target===this)closeDetail()">
-  <div class="overlay-panel" id="detail-panel"></div>
-</div>
-
 <script>
-const PR={autonomous:{human:{M:85,C:50,lock:45},environment:{M:90,C:45,lock:48},infrastructure:{M:88,C:55,lock:42}},misuse:{human:{M:90,C:70,lock:40},environment:{M:85,C:60,lock:44},infrastructure:{M:92,C:72,lock:38}},emergent:{human:{M:95,C:65,lock:58},environment:{M:95,C:60,lock:62},infrastructure:{M:96,C:70,lock:52}}};
+const DATES=[2019,2020,2021,2022,2023,2024,2025,2026,2027,2028,2029,2030,2032,2035,2040,2050];
+const RVS=['autonomous','misuse','emergent'];
+const SUBS=['human','environment','infrastructure'];
+const RV_LABELS={autonomous:'Misaligned',misuse:'Misuse',emergent:'Emergent'};
+const SUB_LABELS={human:'Human life',environment:'Sustaining env',infrastructure:'Infrastructure'};
+const RV_COLORS={autonomous:'#5b9cf0',misuse:'#e8913a',emergent:'#e24b4a'};
+const SUB_DASH={human:[],environment:[6,4],infrastructure:[8,4,2,4]};
+const NODES=[{key:'M',label:'Dangerous conditions are changeable',notation:'M'},{key:'C',label:'Optimization sufficient to change them',notation:'C'},{key:'lock',label:'Lock in',notation:'K+ > Rc'}];
 
-const DESC={
-  autonomous:{M:"Can autonomous AI systems access and alter the dangerous conditions within the environment, directly or indirectly?",C:"Does autonomous AI optimization have sufficient capability to change K — whether by directly targeting dangerous conditions or through cascading effects across coupled systems in E?",lock:"Does the rate of worsening outpace corrective capacity?"},
-  misuse:{M:"Can human-directed AI systems access and alter the dangerous conditions within the environment, directly or indirectly?",C:"Can a motivated human actor leverage AI capability sufficiently to change K — through direct action or cascading effects?",lock:"Does the rate of worsening outpace corrective capacity?"},
-  emergent:{M:"Can the aggregate effects of deployed AI systems access and alter the dangerous conditions within the environment, directly or indirectly?",C:"Does the AI ecosystem — collectively — have sufficient capability to shift K through aggregate dynamics and environmental coupling?",lock:"Does the rate of worsening outpace corrective capacity?"}
+const DEFAULTS={
+  autonomous:{human:{base:{M:80,C:35,lock:25},proj:{M:88,C:55,lock:48}},environment:{base:{M:85,C:30,lock:28},proj:{M:92,C:50,lock:52}},infrastructure:{base:{M:82,C:40,lock:22},proj:{M:90,C:60,lock:45}}},
+  misuse:{human:{base:{M:85,C:55,lock:20},proj:{M:92,C:75,lock:42}},environment:{base:{M:80,C:45,lock:22},proj:{M:88,C:65,lock:46}},infrastructure:{base:{M:88,C:60,lock:18},proj:{M:94,C:78,lock:40}}},
+  emergent:{human:{base:{M:90,C:45,lock:30},proj:{M:96,C:68,lock:58}},environment:{base:{M:88,C:40,lock:32},proj:{M:95,C:62,lock:62}},infrastructure:{base:{M:92,C:50,lock:28},proj:{M:97,C:72,lock:55}}}
 };
 
-const DETAIL={
-  doom:{title:"Doom",gate:"AND",gateClass:"gt-and",notation:"D = DAI ∧ Lock in",desc:"Doom occurs when AI optimization worsens dangerous conditions faster than corrective capacity can reverse them."},
-  dai:{title:"AI increases P(Doom)",gate:"AND",gateClass:"gt-and",notation:"DAI = K+ | O > R₀",desc:"An AI whose optimization accelerates the worsening of dangerous conditions beyond the current rate is considered dangerous (DAI). The baseline R₀ may include existing AI effects — this asks whether additional or scaled optimization makes things worse than the current trajectory. Agnostic of intent: malicious, misused, or incidental."},
-  M:{title:"K is mutable",gate:"LEAF",gateClass:"gt-leaf",notation:"M",desc:"The dangerous conditions within the environment are accessible and changeable. This is a property of the environment, not of the AI. If K can't be changed, optimization can't worsen it."},
-  C:{title:"O sufficient to mutate K",gate:"LEAF",gateClass:"gt-leaf",notation:"C",desc:"The optimization process has enough capability to change K. This can happen directly (O targets K) or indirectly through environmental coupling (O targets some other part of E and effects cascade to K)."},
-  lock:{title:"Lock in",gate:"LEAF",gateClass:"gt-leaf",notation:"K+ > Rc",desc:"The rate at which K worsens exceeds corrective capacity to reverse it. Locking in a trajectory."}
-};
+function deepCopy(o){return JSON.parse(JSON.stringify(o))}
+function doom(s){return(s.M/100)*(s.C/100)*(s.lock/100)*100}
+function pCol(v){return v>20?'p-high':v>10?'p-med':v>5?'p-low':'p-safe'}
+function barCol(v){return v>20?'#e24b4a':v>10?'#e8913a':v>5?'#f0b060':'#5dca7a'}
+function pF(v){return v<0.01?v.toExponential(1):v<1?v.toFixed(2)+'%':v.toFixed(1)+'%'}
+function dateOpts(sel){return DATES.map(y=>`<option value="${y}"${y===sel?' selected':''}>${y}</option>`).join('')}
 
-let s={};
-const g=k=>s[k]/100;
-const pCol=v=>v>20?'p-high':v>10?'p-med':v>5?'p-low':'p-safe';
-const barCol=v=>v>20?'bar-high':v>10?'bar-med':v>5?'bar-low':'bar-safe';
-const pFmt=v=>v<0.01?v.toExponential(1):v<1?v.toFixed(2)+'%':v.toFixed(1)+'%';
-
-function recalc(){
-  const dai=g('M')*g('C');
-  const doom=dai*g('lock');
-  upNode('p-dai','pb-dai',dai*100);
-  upNode('p-doom','pb-doom',doom*100);
-  Object.keys(s).forEach(k=>{
-    const e=document.getElementById('lv-'+k);if(e)e.textContent=s[k]+'%';
-    const b=document.getElementById('pb-'+k);if(b){b.className='nd-p-bar '+barCol(s[k]);b.style.width=Math.max(20,s[k]*0.6)+'px'}
-  });
-  const pct=doom*100,ve=document.getElementById('pdoom-val'),fe=document.getElementById('pdoom-fill');
-  ve.textContent=pFmt(pct);ve.className='pdoom-val '+pCol(pct);
-  fe.style.width=Math.min(pct,100)+'%';fe.style.background=pct>20?'#e24b4a':pct>10?'#e8913a':pct>5?'#f0b060':'#5dca7a';
-  const sc=document.getElementById('scenario-input').value;
-  const rv={autonomous:'autonomous misaligned',misuse:'human misuse',emergent:'emergent dynamics'}[document.getElementById('risk-vector').value];
-  const sb={human:'human life',environment:'sustaining environment',infrastructure:'infrastructure / civilization'}[document.getElementById('substrate').value];
-  const tw=document.getElementById('timewindow').value;
-  document.getElementById('pdoom-scn').textContent=sc?`${sc} — ${rv} → ${sb} — ${tw}yr window`:`${rv} → ${sb} — ${tw}yr window`;
-}
-function upNode(pid,bid,v){
-  const e=document.getElementById(pid);if(e){e.textContent=pFmt(v);e.className='nd-p '+pCol(v)}
-  const b=document.getElementById(bid);if(b){b.className='nd-p-bar '+barCol(v);b.style.width=Math.max(20,v*0.8)+'px'}
-}
-function onS(k,v){s[k]=+v;recalc()}
-
-function lf(k,title,notn,detKey){
-  const rv=document.getElementById('risk-vector').value;
-  return`<div class="nd w-leaf" data-nid="${detKey||k}" onclick="openDetail('${detKey||k}')">
-    <div class="nd-hdr"><span class="gt gt-leaf">LEAF</span></div>
-    <div class="nd-p-wrap"><span class="nd-p" id="lv-${k}">${s[k]}%</span><div class="nd-p-bar" id="pb-${k}"></div></div>
-    <div class="nd-t">${title}</div>
-    ${notn?`<div class="nd-n">${notn}</div>`:''}
-    <div class="nd-d">${DESC[rv][k]}</div>
-    <div class="nd-click">Click a node to see its details.</div>
-    <div class="sl" onclick="event.stopPropagation()"><input type="range" min="1" max="99" value="${s[k]}" step="1" oninput="onS('${k}',this.value)"><div class="sl-v">${s[k]}%</div></div>
-  </div>`;
+/* ====== TAB SWITCHING ====== */
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',i===(t==='single'?0:1)));
+  document.getElementById('tc-single').classList.toggle('active',t==='single');
+  document.getElementById('tc-all').classList.toggle('active',t==='all');
+  if(t==='all')aRecalc();
 }
 
-function openDetail(key){
-  const d=DETAIL[key];if(!d)return;
-  const prob=document.getElementById('p-'+key)||document.getElementById('lv-'+key);
-  const probText=prob?prob.textContent:'—';
-  document.getElementById('detail-panel').innerHTML=`
-    <button class="overlay-close" onclick="closeDetail()">&#x2715;</button>
-    <div class="detail-gate ${d.gateClass}">${d.gate}</div>
-    <div class="detail-title">${d.title}</div>
-    ${d.notation?`<div class="detail-notation">${d.notation}</div>`:''}
-    <div class="detail-prob ${pCol(parseFloat(probText))}">${probText}</div>
-    <div class="detail-section"><h4>What this captures</h4><p>${d.desc}</p></div>`;
-  document.getElementById('detail-overlay').classList.add('open');
-}
-function closeDetail(){document.getElementById('detail-overlay').classList.remove('open')}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetail();document.getElementById('defs-overlay').classList.remove('open')}});
+/* ====== SINGLE SCENARIO ====== */
+let sBase={M:90,C:45,lock:30},sProj={M:96,C:68,lock:58},sBY=2024,sPY=2030,sChart=null;
 
-function applyPreset(){
-  s={...PR[document.getElementById('risk-vector').value][document.getElementById('substrate').value]};
-  render();recalc();
+function sRenderPanel(el,title,sub,state,yr,prefix){
+  const d=doom(state);
+  el.innerHTML=`
+    <div class="panel-head"><div class="panel-title">${title}</div><div class="panel-date"><select onchange="${prefix}=${prefix==='sBY'?'sBY':'sPY'}=+this.value;sRecalc()">${dateOpts(yr)}</select></div></div>
+    ${NODES.map(n=>`<div class="node-row"><div><div class="node-name">${n.label}</div><div class="node-notation">${n.notation}</div></div><div class="node-control"><input class="nslider" type="range" min="1" max="99" step="1" value="${state[n.key]}" oninput="${prefix==='sBY'?'sBase':'sProj'}.${n.key}=+this.value;sRecalc()"><div class="node-pct">${state[n.key]}%</div></div></div>`).join('')}
+    <div class="panel-pdoom"><div class="panel-pdoom-label">P(Doom)</div><div class="panel-pdoom-val ${pCol(d)}">${pF(d)}</div><div class="panel-pdoom-bar"><div class="panel-pdoom-fill" style="width:${Math.min(d,100)}%;background:${barCol(d)}"></div></div></div>`;
 }
 
-function render(){
-  const w=document.getElementById('tree-wrap');
-  const rv=document.getElementById('risk-vector').value;
-  w.innerHTML=`
-    <!-- Tier 0: Doom -->
-    <div class="tier">
-      <div class="nd nd-root w-root" data-nid="doom" onclick="openDetail('doom')">
-        <div class="nd-hdr"><span class="gt gt-and">AND</span></div>
-        <div class="nd-p-wrap"><span class="nd-p" id="p-doom">—</span><div class="nd-p-bar" id="pb-doom"></div></div>
-        <div class="nd-t">Doom</div>
-        <div class="nd-n">D = DAI ∧ Lock in</div>
-        <div class="nd-d">AI optimization accelerates trajectory towards doom, outpacing corrective capacity</div>
-        <div class="nd-click">Click a node to see its details.</div>
-      </div>
-    </div>
-    <div class="tier-gap"></div>
-
-    <!-- Tier 1+2: Two columns - DAI branch left, Lock in right -->
-    <div style="display:flex;justify-content:center;gap:100px;align-items:flex-start;position:relative;z-index:1">
-
-      <!-- Left column: DAI with M+C beneath -->
-      <div style="display:flex;flex-direction:column;align-items:center">
-        <div class="nd" data-nid="dai" onclick="openDetail('dai')" style="width:400px">
-          <div class="nd-hdr"><span class="gt gt-and">AND</span></div>
-          <div class="nd-p-wrap"><span class="nd-p" id="p-dai">—</span><div class="nd-p-bar" id="pb-dai"></div></div>
-          <div class="nd-t">AI increases P(Doom)</div>
-          <div class="nd-n">DAI = K+ | O > R₀</div>
-          <div class="nd-d">An AI whose optimization accelerates the worsening of dangerous conditions beyond the current rate</div>
-          <div class="nd-click">Click a node to see its details.</div>
-        </div>
-        <div style="height:100px"></div>
-        <div style="display:flex;gap:48px;justify-content:center">
-          <div style="width:300px">${lf('M','K is mutable','M','M')}</div>
-          <div style="width:300px">${lf('C','O sufficient to mutate K','C','C')}</div>
-        </div>
-      </div>
-
-      <!-- Right column: Lock in -->
-      <div style="display:flex;flex-direction:column;align-items:center">
-        <div style="width:340px">${lf('lock','Lock in','K+ > Rc','lock')}</div>
-      </div>
-
-    </div>
-  `;
-  requestAnimationFrame(()=>requestAnimationFrame(drawLines));
+function sRecalc(){
+  sRenderPanel(document.getElementById('sp-base'),'Baseline','snapshot',sBase,sBY,'sBY');
+  sRenderPanel(document.getElementById('sp-proj'),'Projection','future',sProj,sPY,'sPY');
+  const d1=doom(sBase),d2=doom(sProj),diff=d2-d1,span=sPY-sBY||1;
+  let biggest='',bigD=0;NODES.forEach(n=>{const d=sProj[n.key]-sBase[n.key];if(Math.abs(d)>Math.abs(bigD)){bigD=d;biggest=n.notation}});
+  document.getElementById('s-delta').innerHTML=`
+    <div class="delta-item"><div class="delta-label">P(Doom) change</div><div class="delta-val" style="color:${diff>0?'#e24b4a':'#5dca7a'}">${diff>0?'+':''}${diff.toFixed(1)}pp</div></div>
+    <div class="delta-item"><div class="delta-label">Biggest mover</div><div class="delta-val">${biggest} (${bigD>0?'+':''}${bigD}pp)</div></div>
+    <div class="delta-item"><div class="delta-label">Time span</div><div class="delta-val">${span} years</div></div>
+    <div class="delta-item"><div class="delta-label">Rate</div><div class="delta-val" style="color:${diff>0?'#e24b4a':'#5dca7a'}">${(diff/span).toFixed(1)}pp/yr</div></div>`;
+  const yrs=[];for(let y=sBY;y<=sPY;y++)yrs.push(y);
+  const sp=sPY-sBY||1;
+  const traj=yrs.map((_,i)=>{const t=i/sp;return d1+(d2-d1)*t*t});
+  const bl=yrs.map(()=>d1);
+  const ctx=document.getElementById('s-chart').getContext('2d');
+  if(sChart)sChart.destroy();
+  sChart=new Chart(ctx,{type:'line',data:{labels:yrs,datasets:[{label:'P(Doom)',data:traj,borderColor:'#e8913a',backgroundColor:'rgba(232,145,58,0.08)',fill:true,tension:.4,pointRadius:0,borderWidth:2.5},{label:'Baseline',data:bl,borderColor:'rgba(255,255,255,0.15)',borderDash:[4,4],fill:false,pointRadius:0,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},plugins:{legend:{display:true,position:'bottom',labels:{color:'#908e86',font:{family:'DM Sans',size:11},boxWidth:12,padding:16,usePointStyle:true,pointStyle:'circle'}},tooltip:{backgroundColor:'#1a1b22',titleColor:'#d8d6ce',bodyColor:'#908e86',borderColor:'rgba(255,255,255,0.08)',borderWidth:.5,padding:12,cornerRadius:8,displayColors:false,callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(1)+'%'}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5e5d58',font:{family:'IBM Plex Mono',size:11}},border:{color:'rgba(255,255,255,0.06)'}},y:{min:0,max:Math.max(d2*1.3,d1*1.3,10),grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5e5d58',font:{family:'IBM Plex Mono',size:11},callback:v=>Math.round(v)+'%'},border:{color:'rgba(255,255,255,0.06)'}}}}});
 }
 
-function drawLines(){
-  const w=document.getElementById('tree-wrap');
-  const old=w.querySelector('svg');if(old)old.remove();
-  const wr=w.getBoundingClientRect();
-  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.setAttribute('width',wr.width);svg.setAttribute('height',wr.height);
-  svg.style.cssText='position:absolute;top:0;left:0;pointer-events:none;z-index:0';
+function sApply(){
+  const rv=document.getElementById('s-rv').value,sub=document.getElementById('s-sub').value;
+  const p=DEFAULTS[rv][sub];sBase={...p.base};sProj={...p.proj};sBY=2024;sPY=2030;sRecalc();
+}
 
-  function cx(el){const r=el.getBoundingClientRect();return r.left-wr.left+r.width/2}
-  function tp(el){return el.getBoundingClientRect().top-wr.top}
-  function bt(el){return el.getBoundingClientRect().bottom-wr.top}
+/* ====== ALL TRAJECTORIES ====== */
+let aState=deepCopy(DEFAULTS),aBY=2024,aPY=2030,aChart=null,aActive=null;
 
-  // Draw a dot
-  function dot(x,y){
-    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
-    c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r','3');
-    c.setAttribute('fill','var(--dot-color)');
-    svg.appendChild(c);
-  }
+function aInit(){
+  const bs=document.getElementById('a-byear'),ps=document.getElementById('a-pyear');
+  bs.innerHTML=dateOpts(2024);ps.innerHTML=dateOpts(2030);
+}
 
-  function connect(parentNid,childNids){
-    const parent=w.querySelector(`[data-nid="${parentNid}"]`);
-    const children=childNids.map(n=>w.querySelector(`[data-nid="${n}"]`)).filter(Boolean);
-    if(!parent||!children.length)return;
-    const px=cx(parent),py=bt(parent);
-    const firstTop=tp(children[0]);
-    const midY=py+(firstTop-py)*0.45;
-    dot(px,py);
-    const vline=document.createElementNS('http://www.w3.org/2000/svg','line');
-    vline.setAttribute('x1',px);vline.setAttribute('y1',py);vline.setAttribute('x2',px);vline.setAttribute('y2',midY);
-    vline.setAttribute('stroke','rgba(255,255,255,0.08)');vline.setAttribute('stroke-width','1.5');
-    svg.appendChild(vline);
-    dot(px,midY);
-    children.forEach(c=>{
-      const ccx=cx(c),cty=tp(c);
-      const dy=cty-midY;
-      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d',`M${px},${midY} C${px},${midY+dy*0.4} ${ccx},${cty-dy*0.4} ${ccx},${cty}`);
-      path.setAttribute('stroke','rgba(255,255,255,0.08)');path.setAttribute('stroke-width','1.5');path.setAttribute('fill','none');
-      svg.appendChild(path);
-      dot(ccx,cty);
+function aReset(){aState=deepCopy(DEFAULTS);aBY=2024;aPY=2030;aActive=null;closeSide();aRecalc()}
+
+function aRecalc(){
+  aBY=+document.getElementById('a-byear').value;aPY=+document.getElementById('a-pyear').value;
+  let html='<div class="m-hdr"></div><div class="m-hdr">Human life</div><div class="m-hdr">Sustaining env</div><div class="m-hdr">Infrastructure</div>';
+  let worst={v:0,rv:'',sub:''};let fastRate={v:0,rv:'',sub:''};
+  let allM=[],allC=[],allLock=[];
+  RVS.forEach(rv=>{
+    html+=`<div class="m-rlabel">${RV_LABELS[rv]}</div>`;
+    SUBS.forEach(sub=>{
+      const b=doom(aState[rv][sub].base),p=doom(aState[rv][sub].proj);
+      const diff=p-b,span=aPY-aBY||1,rate=diff/span;
+      const isActive=aActive&&aActive.rv===rv&&aActive.sub===sub;
+      if(p>worst.v){worst={v:p,rv,sub}}
+      if(rate>fastRate.v){fastRate={v:rate,rv,sub}}
+      allM.push(aState[rv][sub].proj.M);allC.push(aState[rv][sub].proj.C);allLock.push(aState[rv][sub].proj.lock);
+      html+=`<div class="m-cell${isActive?' active':''}" onclick="openSide('${rv}','${sub}')">
+        <div class="m-cell-base">${pF(b)}</div>
+        <div class="m-cell-proj" style="color:${barCol(p)}">${pF(p)}</div>
+        <div class="m-cell-delta" style="color:${diff>0?'#e24b4a':'#5dca7a'}">${diff>0?'+':''}${diff.toFixed(1)}pp · ${rate>0?'+':''}${rate.toFixed(1)}/yr</div>
+        <div class="m-cell-bar" style="width:${Math.min(p,100)}%;background:${barCol(p)}"></div>
+      </div>`;
     });
-  }
+  });
+  document.getElementById('a-matrix').innerHTML=html;
 
-  connect('doom',['dai','lock']);
-  connect('dai',['M','C']);
+  const mRange=`${Math.min(...allM)}-${Math.max(...allM)}%`;
+  const cRange=`${Math.min(...allC)}-${Math.max(...allC)}%`;
+  const lRange=`${Math.min(...allLock)}-${Math.max(...allLock)}%`;
+  const ranges=[{k:'M',r:Math.max(...allM)-Math.min(...allM)},{k:'C',r:Math.max(...allC)-Math.min(...allC)},{k:'Lock in',r:Math.max(...allLock)-Math.min(...allLock)}];
+  ranges.sort((a,b)=>a.r-b.r);
+  document.getElementById('a-insights').innerHTML=`
+    <div class="insight-item"><div class="insight-label">Worst case</div><div class="insight-val" style="color:${barCol(worst.v)}">${RV_LABELS[worst.rv]} × ${SUB_LABELS[worst.sub]}</div></div>
+    <div class="insight-item"><div class="insight-label">Fastest rate</div><div class="insight-val" style="color:${barCol(fastRate.v)}">${fastRate.v>0?'+':''}${fastRate.v.toFixed(1)}pp/yr</div></div>
+    <div class="insight-item"><div class="insight-label">Most consistent</div><div class="insight-val">${ranges[0].k} (${ranges[0].r}pp spread)</div></div>
+    <div class="insight-item"><div class="insight-label">Most variable</div><div class="insight-val">${ranges[2].k} (${ranges[2].r}pp spread)</div></div>`;
 
-  w.appendChild(svg);
+  aRenderChart();
+  if(aActive)renderSideContent();
 }
 
-window.addEventListener('resize',()=>requestAnimationFrame(drawLines));
-applyPreset();
+function aRenderChart(){
+  const yrs=[];for(let y=aBY;y<=aPY;y++)yrs.push(y);
+  const sp=aPY-aBY||1;
+  const allCurves=[];
+  RVS.forEach(rv=>{SUBS.forEach(sub=>{
+    const b=doom(aState[rv][sub].base),p=doom(aState[rv][sub].proj);
+    allCurves.push(yrs.map((_,i)=>{const t=i/sp;return b+(p-b)*t*t}));
+  })});
+  const mins=yrs.map((_,i)=>Math.min(...allCurves.map(c=>c[i])));
+  const maxs=yrs.map((_,i)=>Math.max(...allCurves.map(c=>c[i])));
+  const meds=yrs.map((_,i)=>{const vals=allCurves.map(c=>c[i]).sort((a,b)=>a-b);return vals[Math.floor(vals.length/2)]});
+  const sorted=yrs.map((_,i)=>allCurves.map(c=>c[i]).sort((a,b)=>a-b));
+  const q1=yrs.map((_,i)=>sorted[i][Math.floor(sorted[i].length*0.25)]);
+  const q3=yrs.map((_,i)=>sorted[i][Math.floor(sorted[i].length*0.75)]);
+  const ctx=document.getElementById('a-chart').getContext('2d');
+  if(aChart)aChart.destroy();
+  const maxV=Math.max(...maxs,10);
+  aChart=new Chart(ctx,{type:'line',data:{labels:yrs,datasets:[
+    {label:'Full range (max)',data:maxs,borderColor:'transparent',backgroundColor:'rgba(232,145,58,0.06)',fill:'+1',pointRadius:0,borderWidth:0},
+    {label:'Full range (min)',data:mins,borderColor:'transparent',backgroundColor:'transparent',fill:false,pointRadius:0,borderWidth:0},
+    {label:'IQR (Q3)',data:q3,borderColor:'transparent',backgroundColor:'rgba(232,145,58,0.12)',fill:'+1',pointRadius:0,borderWidth:0},
+    {label:'IQR (Q1)',data:q1,borderColor:'transparent',backgroundColor:'transparent',fill:false,pointRadius:0,borderWidth:0},
+    {label:'Median',data:meds,borderColor:'#e8913a',borderWidth:2.5,pointRadius:0,tension:.4,fill:false,backgroundColor:'transparent'},
+    {label:'Worst case',data:maxs,borderColor:'rgba(226,75,74,0.4)',borderWidth:1,borderDash:[4,3],pointRadius:0,tension:.4,fill:false,backgroundColor:'transparent'},
+    {label:'Best case',data:mins,borderColor:'rgba(93,202,122,0.4)',borderWidth:1,borderDash:[4,3],pointRadius:0,tension:.4,fill:false,backgroundColor:'transparent'}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a1b22',titleColor:'#d8d6ce',bodyColor:'#908e86',borderColor:'rgba(255,255,255,0.08)',borderWidth:.5,padding:12,cornerRadius:8,filter:function(item){return item.datasetIndex>=4},callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(1)+'%'}}},scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5e5d58',font:{family:'IBM Plex Mono',size:11}},border:{color:'rgba(255,255,255,0.06)'}},y:{min:0,max:maxV*1.25,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5e5d58',font:{family:'IBM Plex Mono',size:11},callback:v=>Math.round(v)+'%'},border:{color:'rgba(255,255,255,0.06)'}}}}});
+}
+
+function openSide(rv,sub){
+  aActive={rv,sub};
+  document.getElementById('a-side').classList.add('open');
+  renderSideContent();
+  document.querySelectorAll('.m-cell').forEach(el=>el.classList.remove('active'));
+  const cells=document.querySelectorAll('.m-cell');
+  const idx=RVS.indexOf(rv)*3+SUBS.indexOf(sub);
+  if(cells[idx])cells[idx].classList.add('active');
+}
+
+function renderSideContent(){
+  const{rv,sub}=aActive;
+  const s=aState[rv][sub];
+  const bD=doom(s.base),pD=doom(s.proj);
+  document.getElementById('a-side-content').innerHTML=`
+    <div class="all-side-title">${RV_LABELS[rv]} × ${SUB_LABELS[sub]}</div>
+    <div class="all-side-sub">Adjust sliders for this configuration</div>
+    <div class="all-side-section">
+      <div class="all-side-section-label">Baseline (${aBY})</div>
+      ${NODES.map(n=>`<div class="side-node"><div class="side-node-name">${n.label}</div><div class="side-node-ctrl"><input class="side-slider" type="range" min="1" max="99" step="1" value="${s.base[n.key]}" oninput="aState['${rv}']['${sub}'].base.${n.key}=+this.value;aRecalc()"><div class="side-pct">${s.base[n.key]}%</div></div></div>`).join('')}
+      <div style="text-align:center;margin-top:8px"><span style="font-size:9px;color:var(--tx3)">P(DOOM)</span><br><span class="side-pdoom-val ${pCol(bD)}">${pF(bD)}</span></div>
+    </div>
+    <div class="all-side-section">
+      <div class="all-side-section-label">Projection (${aPY})</div>
+      ${NODES.map(n=>`<div class="side-node"><div class="side-node-name">${n.label}</div><div class="side-node-ctrl"><input class="side-slider" type="range" min="1" max="99" step="1" value="${s.proj[n.key]}" oninput="aState['${rv}']['${sub}'].proj.${n.key}=+this.value;aRecalc()"><div class="side-pct">${s.proj[n.key]}%</div></div></div>`).join('')}
+      <div style="text-align:center;margin-top:8px"><span style="font-size:9px;color:var(--tx3)">P(DOOM)</span><br><span class="side-pdoom-val ${pCol(pD)}">${pF(pD)}</span></div>
+    </div>`;
+}
+
+function closeSide(){aActive=null;document.getElementById('a-side').classList.remove('open');document.querySelectorAll('.m-cell').forEach(el=>el.classList.remove('active'))}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('defs-overlay').classList.remove('open');closeSide()}});
+
+aInit();sApply();
 </script>
 </body>
 </html>
