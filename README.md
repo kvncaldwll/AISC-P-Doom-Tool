@@ -57,6 +57,6 @@ sliders represent _confidence_ that a condition holds (1-99%), not the degree to
 
 **key considerations**
 
-we can't empirically isolate AI's contribution to the rate of change from other pressures (climate, geopolitics, etc)
-the tool is designed for users to assign their confidence to how much they think AI contributes, ideally grounded in evidence
-the baseline R₀ at time t already includes existing AI effects making the comparison against the current trajectory, not a hypothetical world without AI
+- we can't empirically isolate AI's contribution to the rate of change from other pressures (climate, geopolitics, etc)
+- the tool is designed for users to assign their confidence to how much they think AI contributes, ideally grounded in evidence
+- the baseline R₀ at time t already includes existing AI effects making the comparison against the current trajectory, not a hypothetical world without AI
