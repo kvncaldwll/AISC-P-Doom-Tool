@@ -53,13 +53,13 @@ P(Doom) = P(M) × P(C) × P(Lock in)
 
 ## usage guide
 
-**single scenario tab**
+###single scenario tab
 - pick a risk vector and substrate
 - set a baseline snapshot and a future projection
 - adjust confidence sliders for each node
 - see P(Doom) trajectory
 
-**all trajectories tab**
+###all trajectories tab
 - view all 9 configurations (3 risk vectors × 3 substrates) simultaneously
 - a 3×3 matrix shows P(Doom) at baseline and projection for every combination
 - click any cell to open a side panel and adjust its sliders
