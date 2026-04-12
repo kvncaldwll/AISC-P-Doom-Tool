@@ -4,7 +4,7 @@ an interactive tool for mapping probabilites for AI-caused doom
 built as part of [AISC - Project 19: Investigating the assumptions of the Doom Debate](https://www.aisafety.camp/#h.pxd3zndm22u4)
 
 
-**Framing**
+**framing**
 
 this is an environment-first approach to AI risk
 "dangerous" is a property of the configuration between optimization and environment, not just the agent capability
@@ -17,7 +17,7 @@ this is agnostic of:
 - system architecture (single agent, multipolar, emergent dynamics)
 - specific AI capabilities (intelligence, strategic planning, etc)
 
-**Notation**
+**notation**
 
 E = environment (internally coupled such that changes propagate to K)
 K = dangerous conditions (subset of E)
